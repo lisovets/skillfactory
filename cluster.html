@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Кластеризация объектов с ограничением границами полигона</title>
+  <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.27/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.27/"></script>
+  <style>
+    #viewDiv {
+      height: 500px;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewDiv"></div>
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Cluster",
+      "esri/geometry/geometryEngine",
+      "esri/Graphic"
+    ], function(Map, MapView, FeatureLayer, Cluster, geometryEngine, Graphic) {
+
+      var map = new Map({
+        basemap: "streets"
+      });
+
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-98.5795, 39.8282], // Центр карты (пример)
+        zoom: 4 // Масштаб карты (пример)
+      });
+
+      var featureLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/nSZVuSZjHpEZZbRo/ArcGIS/rest/services/OSM_POI/FeatureServer/0"
+      });
+
+      var boundaryLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Countries_(Generalized)/FeatureServer"
+      });
+
+      map.addMany([featureLayer, boundaryLayer]);
+
+      var clusterSymbol = {
+        type: "simple-marker",
+        color: [255, 0, 0, 0.6], // Цвет кластера (пример)
+        size: "30px", // Размер кластера (пример)
+        outline: {
+          color: [255, 0, 0, 1], // Цвет обводки кластера (пример)
+          width: "1.5px" // Ширина обводки кластера (пример)
+        }
+      };
+
+      var boundarySymbol = {
+        type: "simple-fill",
+        color: [0, 255, 0, 0.2], // Цвет полигона ограничения (пример)
+        outline: {
+          color: [0, 255, 0, 1], // Цвет обводки полигона ограничения (пример)
+          width: "1.5px" // Ширина обводки полигона ограничения (пример)
+        }
+      };
+
+      var clusterRenderer = {
+        type: "unique-value",
+        field: "cluster_id", // Поле, используемое для идентификации кластеров
+        symbol: clusterSymbol
+      };
+
+      var boundaryRenderer = {
+        type: "simple",
+        symbol: boundarySymbol
+      };
+
+      var clusterConfig = {
+        clusterRadius: 50, // Радиус кластера (пример)
+        popupTemplate: { // Шаблон всплывающего окна кластера (пример)
+          title: "Cluster",
+          content: "{cluster_count} объектов в этом кластере."
+        },
+        clusterToExtent: true, // Ограничение кластеров границами полигона
+        clusterRatio: 75, // Соотношение размера кластера к размеру полигона (пример)
+        renderer: clusterRenderer // Рендерер для кластеров
+      };
+
+      var clusterWidget = new Cluster({
+        layer: featureLayer,
+        clusterConfig: clusterConfig,
+        view: view
+      });
+
+      view.ui.add(clusterWidget, "top-right"); // Добавление виджета кластеров в интерфейс карты
+
+      boundaryLayer.renderer = boundaryRenderer;
+
+    });
+  </script>
+</body>
+</html>
